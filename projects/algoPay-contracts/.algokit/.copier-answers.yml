@@ -1,0 +1,10 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 1.8.1
+_src_path: gh:algorandfoundation/algokit-python-template
+author_email: akhila.gangisetty001@gmail.com
+author_name: Akhila Gangisetty
+contract_name: algopay
+deployment_language: python
+preset_name: starter
+project_name: algoPay-contracts
+
