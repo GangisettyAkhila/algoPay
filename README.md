@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # algoPay
 
 This starter full stack project has been generated using AlgoKit. See below for default getting started instructions.
@@ -43,3 +44,6 @@ The frontend starter also provides an example of interactions with your AlgopayC
 ## Next Steps
 
 You can take this project and customize it to build your own decentralized applications on Algorand. Make sure to understand how to use AlgoKit and how to write smart contracts for Algorand before you start.
+=======
+# algoPay
+>>>>>>> 9cc71cf071120ffa1ad810c773ed66e6dd5d7705
