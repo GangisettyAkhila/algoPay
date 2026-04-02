@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "kappa": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-remote", "--url", "https://algorand-docs.mcp.kapa.ai/"]
+    },
+    "vibekit-mcp": {
+      "command": "C:\\Users\\HP\\.vibekit\\bin\\vibekit.exe",
+      "args": ["mcp"]
+    },
+    "algorand-mcp": {
+      "command": "npx",
+      "args": ["@goplausible/algorand-mcp"]
+    }
+  }
+}

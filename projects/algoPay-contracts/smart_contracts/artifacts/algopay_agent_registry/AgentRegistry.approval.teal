@@ -1,0 +1,444 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 0 1 2 32
+    bytecblock "agent_count" "agent_" 0x151f7c75 "acct_" "meta_" "admin"
+    txn ApplicationID
+    bnz main_after_if_else@2
+    // smart_contracts/algopay/agent_registry.py:14
+    // self.admin = Account()
+    bytec 5 // "admin"
+    global ZeroAddress
+    app_global_put
+    // smart_contracts/algopay/agent_registry.py:18
+    // self.agent_count = UInt64(0)
+    bytec_0 // "agent_count"
+    intc_0 // 0
+    app_global_put
+
+main_after_if_else@2:
+    // smart_contracts/algopay/agent_registry.py:12
+    // class AgentRegistry(ARC4Contract):
+    txn OnCompletion
+    !
+    assert
+    pushbytes 0xf3f14ea3 // method "bootstrap(address)void"
+    txna ApplicationArgs 0
+    match bootstrap
+
+main_switch_case_next@5:
+    // smart_contracts/algopay/agent_registry.py:12
+    // class AgentRegistry(ARC4Contract):
+    txn ApplicationID
+    assert
+    pushbytess 0x3c342b06 0x8b82cd8e 0xd7ad364e 0x7571e151 0xd1a67a56 0x11e97d3e 0x755f9589 0x239e889b // method "register(string,string)void", method "update_metadata(string,string)void", method "unregister(string)void", method "lookup(string)address", method "get_metadata(string)string", method "is_registered(string)bool", method "get_count()uint64", method "is_agent(address)bool"
+    txna ApplicationArgs 0
+    match register update_metadata unregister lookup get_metadata is_registered get_count is_agent
+    err
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.bootstrap[routing]() -> void:
+bootstrap:
+    // smart_contracts/algopay/agent_registry.py:20
+    // @arc4.abimethod(create="allow")
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/algopay/agent_registry.py:22
+    // self.admin = admin
+    bytec 5 // "admin"
+    swap
+    app_global_put
+    // smart_contracts/algopay/agent_registry.py:23
+    // self.agent_count = UInt64(0)
+    bytec_0 // "agent_count"
+    intc_0 // 0
+    app_global_put
+    // smart_contracts/algopay/agent_registry.py:20
+    // @arc4.abimethod(create="allow")
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.register[routing]() -> void:
+register:
+    // smart_contracts/algopay/agent_registry.py:25
+    // @arc4.abimethod()
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    // smart_contracts/algopay/agent_registry.py:27
+    // assert agent_id not in self.agents, "Agent ID already registered"
+    bytec_1 // "agent_"
+    dig 2
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    assert // Agent ID already registered
+    // smart_contracts/algopay/agent_registry.py:28
+    // assert Txn.sender not in self.agent_by_account, "Account already registered"
+    bytec_3 // "acct_"
+    txn Sender
+    concat
+    box_len
+    bury 1
+    !
+    assert // Account already registered
+    // smart_contracts/algopay/agent_registry.py:30
+    // self.agents[agent_id] = Txn.sender
+    txn Sender
+    box_put
+    // smart_contracts/algopay/agent_registry.py:31
+    // self.metadata[agent_id] = metadata_uri
+    bytec 4 // "meta_"
+    dig 2
+    concat
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/algopay/agent_registry.py:32
+    // self.agent_by_account[Txn.sender] = agent_id
+    bytec_3 // "acct_"
+    txn Sender
+    concat
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/algopay/agent_registry.py:33
+    // self.agent_count += UInt64(1)
+    intc_0 // 0
+    bytec_0 // "agent_count"
+    app_global_get_ex
+    assert // check self.agent_count exists
+    intc_1 // 1
+    +
+    bytec_0 // "agent_count"
+    swap
+    app_global_put
+    // smart_contracts/algopay/agent_registry.py:25
+    // @arc4.abimethod()
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.update_metadata[routing]() -> void:
+update_metadata:
+    // smart_contracts/algopay/agent_registry.py:35
+    // @arc4.abimethod()
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    txna ApplicationArgs 2
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    // smart_contracts/algopay/agent_registry.py:37
+    // assert agent_id in self.agents, "Agent ID not found"
+    bytec_1 // "agent_"
+    dig 2
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Agent ID not found
+    // smart_contracts/algopay/agent_registry.py:38
+    // assert self.agents[agent_id] == Txn.sender, "Not the registered agent"
+    box_get
+    pop
+    txn Sender
+    ==
+    assert // Not the registered agent
+    // smart_contracts/algopay/agent_registry.py:40
+    // self.metadata[agent_id] = metadata_uri
+    bytec 4 // "meta_"
+    uncover 2
+    concat
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/algopay/agent_registry.py:35
+    // @arc4.abimethod()
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.unregister[routing]() -> void:
+unregister:
+    // smart_contracts/algopay/agent_registry.py:42
+    // @arc4.abimethod()
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    // smart_contracts/algopay/agent_registry.py:44
+    // assert agent_id in self.agents, "Agent ID not found"
+    bytec_1 // "agent_"
+    dig 1
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Agent ID not found
+    // smart_contracts/algopay/agent_registry.py:45
+    // assert self.agents[agent_id] == Txn.sender, "Not the registered agent"
+    dup
+    box_get
+    pop
+    txn Sender
+    ==
+    assert // Not the registered agent
+    // smart_contracts/algopay/agent_registry.py:47
+    // del self.agent_by_account[Txn.sender]
+    bytec_3 // "acct_"
+    txn Sender
+    concat
+    box_del
+    pop
+    // smart_contracts/algopay/agent_registry.py:48
+    // del self.agents[agent_id]
+    box_del
+    pop
+    // smart_contracts/algopay/agent_registry.py:49
+    // del self.metadata[agent_id]
+    bytec 4 // "meta_"
+    swap
+    concat
+    box_del
+    pop
+    // smart_contracts/algopay/agent_registry.py:50
+    // self.agent_count -= UInt64(1)
+    intc_0 // 0
+    bytec_0 // "agent_count"
+    app_global_get_ex
+    assert // check self.agent_count exists
+    intc_1 // 1
+    -
+    bytec_0 // "agent_count"
+    swap
+    app_global_put
+    // smart_contracts/algopay/agent_registry.py:42
+    // @arc4.abimethod()
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.lookup[routing]() -> void:
+lookup:
+    // smart_contracts/algopay/agent_registry.py:52
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    // smart_contracts/algopay/agent_registry.py:54
+    // assert agent_id in self.agents, "Agent ID not found"
+    bytec_1 // "agent_"
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Agent ID not found
+    // smart_contracts/algopay/agent_registry.py:55
+    // return self.agents[agent_id]
+    box_get
+    pop
+    // smart_contracts/algopay/agent_registry.py:52
+    // @arc4.abimethod(readonly=True)
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.get_metadata[routing]() -> void:
+get_metadata:
+    // smart_contracts/algopay/agent_registry.py:57
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    // smart_contracts/algopay/agent_registry.py:59
+    // assert agent_id in self.metadata, "Agent ID not found"
+    bytec 4 // "meta_"
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    assert // Agent ID not found
+    // smart_contracts/algopay/agent_registry.py:60
+    // return self.metadata[agent_id]
+    box_get
+    pop
+    // smart_contracts/algopay/agent_registry.py:57
+    // @arc4.abimethod(readonly=True)
+    dup
+    len
+    itob
+    extract 6 2
+    swap
+    concat
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.is_registered[routing]() -> void:
+is_registered:
+    // smart_contracts/algopay/agent_registry.py:62
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    intc_0 // 0
+    extract_uint16 // on error: invalid array length header
+    intc_2 // 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    extract 2 0
+    // smart_contracts/algopay/agent_registry.py:64
+    // return agent_id in self.agents
+    bytec_1 // "agent_"
+    swap
+    concat
+    box_len
+    bury 1
+    // smart_contracts/algopay/agent_registry.py:62
+    // @arc4.abimethod(readonly=True)
+    pushbytes 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.get_count[routing]() -> void:
+get_count:
+    // smart_contracts/algopay/agent_registry.py:68
+    // return self.agent_count
+    intc_0 // 0
+    bytec_0 // "agent_count"
+    app_global_get_ex
+    assert // check self.agent_count exists
+    // smart_contracts/algopay/agent_registry.py:66
+    // @arc4.abimethod(readonly=True)
+    itob
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return
+
+
+// smart_contracts.algopay.agent_registry.AgentRegistry.is_agent[routing]() -> void:
+is_agent:
+    // smart_contracts/algopay/agent_registry.py:70
+    // @arc4.abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/algopay/agent_registry.py:72
+    // return address in self.agent_by_account
+    bytec_3 // "acct_"
+    swap
+    concat
+    box_len
+    bury 1
+    // smart_contracts/algopay/agent_registry.py:70
+    // @arc4.abimethod(readonly=True)
+    pushbytes 0x00
+    intc_0 // 0
+    uncover 2
+    setbit
+    bytec_2 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_1 // 1
+    return

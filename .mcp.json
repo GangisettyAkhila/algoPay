@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "kappa": {
+      "type": "remote",
+      "url": "https://algorand-docs.mcp.kapa.ai/",
+      "enabled": true
+    },
+    "vibekit-mcp": {
+      "type": "local",
+      "command": [
+        "C:\\Users\\HP\\.vibekit\\bin\\vibekit.exe",
+        "mcp"
+      ],
+      "environment": {},
+      "enabled": true
+    },
+    "algorand-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@goplausible/algorand-mcp"],
+      "enabled": true
+    }
+  }
+}

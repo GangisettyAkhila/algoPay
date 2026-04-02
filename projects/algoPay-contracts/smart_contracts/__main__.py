@@ -36,19 +36,36 @@ class SmartContract:
     deploy: Callable[[], None] | None = None
 
 
-def import_contract(folder: Path) -> Path:
-    """Imports the contract from a folder if it exists."""
-    contract_path = folder / "contract.py"
-    if contract_path.exists():
-        return contract_path
-    else:
-        raise Exception(f"Contract not found in {folder}")
+def get_contract_files(folder: Path) -> list[Path]:
+    """Returns all contract files in a folder."""
+    result = []
+    for f in folder.glob("*_contract.py"):
+        result.append(f)
+    for f in folder.glob("contract.py"):
+        result.append(f)
+    for f in folder.glob("*_agent.py"):
+        result.append(f)
+    for f in folder.glob("*_registry.py"):
+        result.append(f)
+    return result
+
+
+def get_deploy_file(folder: Path) -> Path | None:
+    """Returns the deploy config file for a folder if it exists."""
+    for pattern in ["*_deploy.py", "deploy_config.py"]:
+        matches = list(folder.glob(pattern))
+        if matches:
+            return matches[0]
+    return None
 
 
 def import_deploy_if_exists(folder: Path) -> Callable[[], None] | None:
     """Imports the deploy function from a folder if it exists."""
+    deploy_file = get_deploy_file(folder)
+    if deploy_file is None:
+        return None
     try:
-        module_name = f"{folder.parent.name}.{folder.name}.deploy_config"
+        module_name = f"{folder.parent.name}.{folder.name}.{deploy_file.stem}"
         deploy_module = importlib.import_module(module_name)
         return deploy_module.deploy  # type: ignore[no-any-return, misc]
     except ImportError:
@@ -56,21 +73,32 @@ def import_deploy_if_exists(folder: Path) -> Callable[[], None] | None:
 
 
 def has_contract_file(directory: Path) -> bool:
-    """Checks whether the directory contains a contract.py file."""
-    return (directory / "contract.py").exists()
+    """Checks whether the directory contains any contract files."""
+    return len(get_contract_files(directory)) > 0
 
 
 # Use the current directory (root_path) as the base for contract folders and exclude
 # folders that start with '_' (internal helpers).
-contracts: list[SmartContract] = [
-    SmartContract(
-        path=import_contract(folder),
-        name=folder.name,
-        deploy=import_deploy_if_exists(folder),
-    )
-    for folder in root_path.iterdir()
-    if folder.is_dir() and has_contract_file(folder) and not folder.name.startswith("_")
-]
+contracts: list[SmartContract] = []
+for folder in root_path.iterdir():
+    if (
+        folder.is_dir()
+        and has_contract_file(folder)
+        and not folder.name.startswith("_")
+    ):
+        for contract_file in get_contract_files(folder):
+            if contract_file.name == "contract.py":
+                contract_name = folder.name
+            else:
+                contract_name = contract_file.stem.replace("_contract", "")
+                contract_name = f"{folder.name}_{contract_name}"
+            contracts.append(
+                SmartContract(
+                    path=contract_file,
+                    name=contract_name,
+                    deploy=import_deploy_if_exists(folder),
+                )
+            )
 
 # -------------------------- Build Logic -------------------------- #
 
