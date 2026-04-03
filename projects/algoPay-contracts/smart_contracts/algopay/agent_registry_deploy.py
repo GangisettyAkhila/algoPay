@@ -6,8 +6,10 @@ logger = logging.getLogger(__name__)
 
 
 def deploy() -> None:
-    from smart_contracts.artifacts.algopay.agent_registry_client import (
+    from smart_contracts.artifacts.algopay_agent_registry.agent_registry_client import (
         AgentRegistryFactory,
+        AgentRegistryMethodCallCreateParams,
+        BootstrapArgs,
     )
 
     algorand = algokit_utils.AlgorandClient.from_environment()
@@ -18,6 +20,9 @@ def deploy() -> None:
     )
 
     app_client, result = factory.deploy(
+        create_params=AgentRegistryMethodCallCreateParams(
+            args=BootstrapArgs(admin=deployer.address)
+        ),
         on_update=algokit_utils.OnUpdate.AppendApp,
         on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
     )

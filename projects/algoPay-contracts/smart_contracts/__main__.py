@@ -47,6 +47,8 @@ def get_contract_files(folder: Path) -> list[Path]:
         result.append(f)
     for f in folder.glob("*_registry.py"):
         result.append(f)
+    for f in folder.glob("*_manager.py"):
+        result.append(f)
     return result
 
 

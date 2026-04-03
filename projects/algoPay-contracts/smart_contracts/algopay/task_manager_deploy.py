@@ -6,9 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 def deploy() -> None:
-    from smart_contracts.artifacts.algopay_payment_agent.payment_agent_client import (
-        PaymentAgentFactory,
-        PaymentAgentMethodCallCreateParams,
+    from smart_contracts.artifacts.algopay_task_manager.task_manager_client import (
+        TaskManagerFactory,
+        TaskManagerMethodCallCreateParams,
         BootstrapArgs,
     )
 
@@ -16,12 +16,12 @@ def deploy() -> None:
     deployer = algorand.account.from_environment("DEPLOYER")
 
     factory = algorand.client.get_typed_app_factory(
-        PaymentAgentFactory, default_sender=deployer.address
+        TaskManagerFactory, default_sender=deployer.address
     )
 
     app_client, result = factory.deploy(
-        create_params=PaymentAgentMethodCallCreateParams(
-            args=BootstrapArgs(owner=deployer.address, agent_id="payment-agent-001")
+        create_params=TaskManagerMethodCallCreateParams(
+            args=BootstrapArgs(owner=deployer.address)
         ),
         on_update=algokit_utils.OnUpdate.AppendApp,
         on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
@@ -33,11 +33,11 @@ def deploy() -> None:
     ]:
         algorand.send.payment(
             algokit_utils.PaymentParams(
-                amount=algokit_utils.AlgoAmount(algo=1),
+                amount=algokit_utils.AlgoAmount(algo=5),
                 sender=deployer.address,
                 receiver=app_client.app_address,
             )
         )
         logger.info(
-            f"Deployed PaymentAgent at {app_client.app_id} ({app_client.app_address})"
+            f"Deployed TaskManager at {app_client.app_id} ({app_client.app_address})"
         )
