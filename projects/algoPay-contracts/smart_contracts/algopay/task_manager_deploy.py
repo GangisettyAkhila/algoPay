@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 def deploy() -> None:
     from smart_contracts.artifacts.algopay_task_manager.task_manager_client import (
+        TaskManagerClient,
         TaskManagerFactory,
         TaskManagerMethodCallCreateParams,
         BootstrapArgs,

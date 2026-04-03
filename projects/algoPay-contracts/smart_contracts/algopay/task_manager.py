@@ -12,12 +12,6 @@ from algopy import (
 )
 
 
-TASK_STATUS_PENDING = UInt64(0)
-TASK_STATUS_EXECUTED = UInt64(1)
-TASK_STATUS_CANCELLED = UInt64(2)
-TASK_STATUS_EXPIRED = UInt64(3)
-
-
 class TaskManager(ARC4Contract):
     def __init__(self) -> None:
         self.owner = Account()
@@ -61,7 +55,7 @@ class TaskManager(ARC4Contract):
         self.task_deadline[task_id] = deadline
         self.task_recurring[task_id] = recurring_interval_days
         self.task_next_due[task_id] = deadline
-        self.task_status[task_id] = TASK_STATUS_PENDING
+        self.task_status[task_id] = UInt64(0)
         self.task_created[task_id] = Global.round
         self.task_last_exec[task_id] = UInt64(0)
         self.task_count += UInt64(1)
@@ -78,7 +72,7 @@ class TaskManager(ARC4Contract):
     @arc4.abimethod()
     def execute_task(self, task_id: String) -> None:
         assert self._task_exists(task_id), "Task not found"
-        assert self._get_status(task_id) == TASK_STATUS_PENDING, "Task not pending"
+        assert self._get_status(task_id) == UInt64(0), "Task not pending"
 
         agent = self.task_agent[task_id]
         assert Txn.sender == agent or self._is_approved_executor(Txn.sender), (
@@ -94,7 +88,7 @@ class TaskManager(ARC4Contract):
             "Insufficient balance"
         )
 
-        self._set_status(task_id, TASK_STATUS_EXECUTED)
+        self._set_status(task_id, UInt64(1))
         self.task_last_exec[task_id] = Global.round
 
         itxn.Payment(
@@ -109,21 +103,21 @@ class TaskManager(ARC4Contract):
             next_due = self.task_next_due[task_id] + recurring * rounds_per_day
             self.task_next_due[task_id] = next_due
             self.task_deadline[task_id] = next_due
-            self._set_status(task_id, TASK_STATUS_PENDING)
+            self._set_status(task_id, UInt64(0))
 
     @arc4.abimethod()
     def mark_task_complete(self, task_id: String) -> None:
         assert self._task_exists(task_id), "Task not found"
         assert Txn.sender == self.owner, "Only owner can mark complete"
-        self._set_status(task_id, TASK_STATUS_EXECUTED)
+        self._set_status(task_id, UInt64(1))
         self.task_last_exec[task_id] = Global.round
 
     @arc4.abimethod()
     def cancel_task(self, task_id: String) -> None:
         assert self._task_exists(task_id), "Task not found"
         assert Txn.sender == self.owner, "Only owner can cancel tasks"
-        assert self._get_status(task_id) == TASK_STATUS_PENDING, "Task already executed"
-        self._set_status(task_id, TASK_STATUS_CANCELLED)
+        assert self._get_status(task_id) == UInt64(0), "Task already executed"
+        self._set_status(task_id, UInt64(2))
 
     def _is_approved_executor(self, addr: Account) -> bool:
         return addr in self.approved_executors and self.approved_executors[addr]
@@ -178,18 +172,14 @@ class TaskManager(ARC4Contract):
     def update_task_payment(self, task_id: String, new_payment: UInt64) -> None:
         assert Txn.sender == self.owner, "Only owner can update payment"
         assert self._task_exists(task_id), "Task not found"
-        assert self._get_status(task_id) == TASK_STATUS_PENDING, (
-            "Cannot update non-pending task"
-        )
+        assert self._get_status(task_id) == UInt64(0), "Cannot update non-pending task"
         self.task_payment[task_id] = new_payment
 
     @arc4.abimethod()
     def update_task_deadline(self, task_id: String, new_deadline: UInt64) -> None:
         assert Txn.sender == self.owner, "Only owner can update deadline"
         assert self._task_exists(task_id), "Task not found"
-        assert self._get_status(task_id) == TASK_STATUS_PENDING, (
-            "Cannot update non-pending task"
-        )
+        assert self._get_status(task_id) == UInt64(0), "Cannot update non-pending task"
         self.task_deadline[task_id] = new_deadline
         self.task_next_due[task_id] = new_deadline
 
