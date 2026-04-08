@@ -1,4 +1,6 @@
 {
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/.env.testnet",
   // Disabled due to matangover.mypy extension not supporting monorepos
   // To be addressed as part of https://github.com/matangover/mypy-vscode/issues/82
   "mypy.enabled": false

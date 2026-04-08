@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 def deploy() -> None:
     from smart_contracts.artifacts.algopay_task_manager.task_manager_client import (
-        TaskManagerClient,
         TaskManagerFactory,
         TaskManagerMethodCallCreateParams,
         BootstrapArgs,
@@ -34,11 +33,16 @@ def deploy() -> None:
     ]:
         algorand.send.payment(
             algokit_utils.PaymentParams(
-                amount=algokit_utils.AlgoAmount(algo=5),
+                amount=algokit_utils.AlgoAmount(algo=2),
                 sender=deployer.address,
                 receiver=app_client.app_address,
             )
         )
         logger.info(
-            f"Deployed TaskManager at {app_client.app_id} ({app_client.app_address})"
+            f"Deployed TaskManager at app_id={app_client.app_id} "
+            f"address={app_client.app_address}"
+        )
+    else:
+        logger.info(
+            f"TaskManager already deployed at app_id={app_client.app_id}"
         )

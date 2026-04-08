@@ -8,31 +8,45 @@ from algopy import (
     Txn,
     arc4,
     itxn,
-    gtxn,
 )
 
 
 class TaskManager(ARC4Contract):
+    """
+    TaskManager: Assigns and tracks agent tasks with optional recurring schedules.
+
+    Status values:
+      0 = pending
+      1 = complete
+      2 = cancelled
+    """
+
     def __init__(self) -> None:
         self.owner = Account()
         self.task_count = UInt64(0)
-        self.agents = BoxMap(Account, String, key_prefix="agent_")
-        self.approved_executors = BoxMap(Account, bool, key_prefix="exec_")
-        self.task_exists = BoxMap(String, bool, key_prefix="texist_")
-        self.task_agent = BoxMap(String, Account, key_prefix="tagent_")
-        self.task_description = BoxMap(String, String, key_prefix="tdesc_")
-        self.task_payment = BoxMap(String, UInt64, key_prefix="tpayment_")
-        self.task_deadline = BoxMap(String, UInt64, key_prefix="tdeadline_")
-        self.task_recurring = BoxMap(String, UInt64, key_prefix="trecur_")
-        self.task_next_due = BoxMap(String, UInt64, key_prefix="tnextdue_")
-        self.task_status = BoxMap(String, UInt64, key_prefix="tstatus_")
-        self.task_created = BoxMap(String, UInt64, key_prefix="tcreated_")
-        self.task_last_exec = BoxMap(String, UInt64, key_prefix="tlastexec_")
+
+        # Task storage - keyed by task_id (String)
+        self.task_agent = BoxMap(String, Account, key_prefix="a_")
+        self.task_description = BoxMap(String, String, key_prefix="d_")
+        self.task_payment = BoxMap(String, UInt64, key_prefix="p_")
+        self.task_deadline = BoxMap(String, UInt64, key_prefix="dl_")
+        self.task_recurring = BoxMap(String, UInt64, key_prefix="r_")
+        self.task_status = BoxMap(String, UInt64, key_prefix="s_")
+        self.task_next_due = BoxMap(String, UInt64, key_prefix="nd_")
+
+    # ------------------------------------------------------------------ #
+    #  Lifecycle                                                           #
+    # ------------------------------------------------------------------ #
 
     @arc4.abimethod(create="allow")
     def bootstrap(self, owner: Account) -> None:
+        """Initialize contract with an owner address."""
         self.owner = owner
         self.task_count = UInt64(0)
+
+    # ------------------------------------------------------------------ #
+    #  Task Management                                                     #
+    # ------------------------------------------------------------------ #
 
     @arc4.abimethod()
     def assign_task(
@@ -44,148 +58,121 @@ class TaskManager(ARC4Contract):
         deadline: UInt64,
         recurring_interval_days: UInt64,
     ) -> None:
+        """
+        Assign a new task. Only the owner can call this.
+        payment_amount must be > 0 (in microALGO).
+        deadline is an Algorand round number.
+        recurring_interval_days = 0 means one-shot; > 0 means recurring.
+        """
         assert Txn.sender == self.owner, "Only owner can assign tasks"
-        assert not self._task_exists(task_id), "Task ID already exists"
-        assert payment_amount > UInt64(0), "Payment amount must be positive"
+        assert task_id not in self.task_agent, "Task ID already exists"
+        assert payment_amount > UInt64(0), "Payment must be positive"
 
-        self.task_exists[task_id] = True
         self.task_agent[task_id] = assigned_agent
         self.task_description[task_id] = description
         self.task_payment[task_id] = payment_amount
         self.task_deadline[task_id] = deadline
         self.task_recurring[task_id] = recurring_interval_days
-        self.task_next_due[task_id] = deadline
         self.task_status[task_id] = UInt64(0)
-        self.task_created[task_id] = Global.round
-        self.task_last_exec[task_id] = UInt64(0)
+        self.task_next_due[task_id] = deadline
         self.task_count += UInt64(1)
-
-    def _task_exists(self, task_id: String) -> bool:
-        return task_id in self.task_exists and self.task_exists[task_id]
-
-    def _get_status(self, task_id: String) -> UInt64:
-        return self.task_status[task_id]
-
-    def _set_status(self, task_id: String, status: UInt64) -> None:
-        self.task_status[task_id] = status
 
     @arc4.abimethod()
     def execute_task(self, task_id: String) -> None:
-        assert self._task_exists(task_id), "Task not found"
-        assert self._get_status(task_id) == UInt64(0), "Task not pending"
+        """
+        Execute a pending task. Only the assigned agent can call this.
+        Sends payment to the agent. For recurring tasks, resets to pending
+        with the next deadline.
+        """
+        assert task_id in self.task_agent, "Task not found"
+        assert self.task_status[task_id] == UInt64(0), "Task not pending"
 
         agent = self.task_agent[task_id]
-        assert Txn.sender == agent or self._is_approved_executor(Txn.sender), (
-            "Not authorized"
-        )
+        assert Txn.sender == agent, "Not authorized: must be assigned agent"
 
         deadline = self.task_deadline[task_id]
-        assert Global.round <= deadline, "Task deadline passed"
+        assert Global.round <= deadline, "Task deadline has passed"
 
         payment = self.task_payment[task_id]
-        min_balance = payment + UInt64(100_000)
-        assert Global.current_application_address.balance >= min_balance, (
-            "Insufficient balance"
-        )
+        assert (
+            Global.current_application_address.balance >= payment + UInt64(100_000)
+        ), "Insufficient contract balance"
 
-        self._set_status(task_id, UInt64(1))
-        self.task_last_exec[task_id] = Global.round
-
+        # Pay the agent
         itxn.Payment(
             receiver=agent,
             amount=payment,
             fee=0,
         ).submit()
 
+        # Handle recurring vs one-shot
         recurring = self.task_recurring[task_id]
         if recurring > UInt64(0):
+            # ~1440 rounds per day on Algorand (4.5s block time)
             rounds_per_day = UInt64(1440)
             next_due = self.task_next_due[task_id] + recurring * rounds_per_day
             self.task_next_due[task_id] = next_due
             self.task_deadline[task_id] = next_due
-            self._set_status(task_id, UInt64(0))
+            self.task_status[task_id] = UInt64(0)  # back to pending
+        else:
+            self.task_status[task_id] = UInt64(1)  # complete
 
     @arc4.abimethod()
     def mark_task_complete(self, task_id: String) -> None:
-        assert self._task_exists(task_id), "Task not found"
+        """Mark a task complete without payment. Owner only."""
+        assert task_id in self.task_agent, "Task not found"
         assert Txn.sender == self.owner, "Only owner can mark complete"
-        self._set_status(task_id, UInt64(1))
-        self.task_last_exec[task_id] = Global.round
+        self.task_status[task_id] = UInt64(1)
 
     @arc4.abimethod()
     def cancel_task(self, task_id: String) -> None:
-        assert self._task_exists(task_id), "Task not found"
-        assert Txn.sender == self.owner, "Only owner can cancel tasks"
-        assert self._get_status(task_id) == UInt64(0), "Task already executed"
-        self._set_status(task_id, UInt64(2))
+        """Cancel a pending task. Owner only."""
+        assert task_id in self.task_agent, "Task not found"
+        assert Txn.sender == self.owner, "Only owner can cancel"
+        assert self.task_status[task_id] == UInt64(0), "Task is not pending"
+        self.task_status[task_id] = UInt64(2)
 
-    def _is_approved_executor(self, addr: Account) -> bool:
-        return addr in self.approved_executors and self.approved_executors[addr]
-
-    @arc4.abimethod()
-    def register_agent(self, agent_id: String) -> None:
-        self.agents[Txn.sender] = agent_id
-
-    @arc4.abimethod()
-    def approve_executor(self, executor: Account) -> None:
-        assert Txn.sender == self.owner, "Only owner can approve executors"
-        self.approved_executors[executor] = True
-
-    @arc4.abimethod()
-    def revoke_executor(self, executor: Account) -> None:
-        assert Txn.sender == self.owner, "Only owner can revoke executors"
-        if self._is_approved_executor(executor):
-            del self.approved_executors[executor]
+    # ------------------------------------------------------------------ #
+    #  Read-only queries                                                   #
+    # ------------------------------------------------------------------ #
 
     @arc4.abimethod(readonly=True)
     def get_task(
         self, task_id: String
     ) -> tuple[Account, String, UInt64, UInt64, UInt64, UInt64, UInt64]:
-        assert self._task_exists(task_id), "Task not found"
+        """
+        Return full task details:
+        (agent, description, payment, deadline, recurring, status, next_due)
+        """
+        assert task_id in self.task_agent, "Task not found"
         return (
             self.task_agent[task_id],
             self.task_description[task_id],
             self.task_payment[task_id],
             self.task_deadline[task_id],
             self.task_recurring[task_id],
-            self._get_status(task_id),
-            self.task_last_exec[task_id],
+            self.task_status[task_id],
+            self.task_next_due[task_id],
         )
 
     @arc4.abimethod(readonly=True)
     def get_task_count(self) -> UInt64:
-        return self.task_count
-
-    @arc4.abimethod(readonly=True)
-    def is_registered_agent(self, address: Account) -> bool:
-        return address in self.agents
-
-    @arc4.abimethod(readonly=True)
-    def is_approved_executor(self, address: Account) -> bool:
-        return self._is_approved_executor(address)
-
-    @arc4.abimethod(readonly=True)
-    def get_pending_task_count(self, agent: Account) -> UInt64:
+        """Return total number of tasks assigned."""
         return self.task_count
 
     @arc4.abimethod()
     def update_task_payment(self, task_id: String, new_payment: UInt64) -> None:
+        """Update payment amount for a pending task. Owner only."""
         assert Txn.sender == self.owner, "Only owner can update payment"
-        assert self._task_exists(task_id), "Task not found"
-        assert self._get_status(task_id) == UInt64(0), "Cannot update non-pending task"
+        assert task_id in self.task_agent, "Task not found"
+        assert self.task_status[task_id] == UInt64(0), "Cannot update non-pending task"
         self.task_payment[task_id] = new_payment
 
     @arc4.abimethod()
     def update_task_deadline(self, task_id: String, new_deadline: UInt64) -> None:
+        """Update deadline for a pending task. Owner only."""
         assert Txn.sender == self.owner, "Only owner can update deadline"
-        assert self._task_exists(task_id), "Task not found"
-        assert self._get_status(task_id) == UInt64(0), "Cannot update non-pending task"
+        assert task_id in self.task_agent, "Task not found"
+        assert self.task_status[task_id] == UInt64(0), "Cannot update non-pending task"
         self.task_deadline[task_id] = new_deadline
         self.task_next_due[task_id] = new_deadline
-
-    @arc4.abimethod()
-    def receive_funding(self, payment: gtxn.PaymentTransaction) -> None:
-        assert payment.receiver == Global.current_application_address, (
-            "Payment must be to this contract"
-        )
-        assert Txn.sender == self.owner, "Only owner can fund"

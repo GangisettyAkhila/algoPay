@@ -15,9 +15,18 @@ from dotenv import load_dotenv
 # Algorand transactions in atomic groups -> https://github.com/algorandfoundation/algokit-avm-vscode-debugger
 config.configure(debug=True, trace_all=False)
 
+
 # Set up logging and load environment variables.
+class FlushingHandler(logging.StreamHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
+
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s %(levelname)-10s: %(message)s"
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)-10s: %(message)s",
+    handlers=[FlushingHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 logger.info("Loading .env")
@@ -214,6 +223,10 @@ def main(action: str, contract_name: str | None = None) -> None:
         case "deploy":
             for contract in filtered_contracts:
                 output_dir = artifact_path / contract.name
+                if not output_dir.exists():
+                    raise Exception(
+                        f"Could not deploy {contract.name}, artifacts directory not found: {output_dir}"
+                    )
                 app_spec_file_name = next(
                     (
                         file.name
@@ -223,10 +236,19 @@ def main(action: str, contract_name: str | None = None) -> None:
                     None,
                 )
                 if app_spec_file_name is None:
-                    raise Exception("Could not deploy app, .arc56.json file not found")
+                    raise Exception(
+                        f"Could not deploy {contract.name}, .arc56.json file not found in {output_dir}"
+                    )
                 if contract.deploy:
                     logger.info(f"Deploying app {contract.name}")
-                    contract.deploy()
+                    try:
+                        contract.deploy()
+                    except Exception as e:
+                        logger.error(f"Deployment of {contract.name} failed: {e}")
+                        import traceback
+
+                        logger.error(traceback.format_exc())
+                        raise
         case "all":
             for contract in filtered_contracts:
                 logger.info(f"Building app at {contract.path}")

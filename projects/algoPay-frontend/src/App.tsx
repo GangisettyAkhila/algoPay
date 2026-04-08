@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import { SupportedWallet, WalletId, WalletManager, WalletProvider } from '@txnlab/use-wallet-react'
 import { SnackbarProvider } from 'notistack'
-import Home from './Home'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
+import PageLayout from './components/Layout/PageLayout'
+import Home from './pages/Home'
+import Agents from './pages/Agents'
+import Payments from './pages/Payments'
+import Tasks from './pages/Tasks'
 
 let supportedWallets: SupportedWallet[]
 if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
@@ -21,12 +26,31 @@ if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
     { id: WalletId.DEFLY },
     { id: WalletId.PERA },
     { id: WalletId.EXODUS },
-    // If you are interested in WalletConnect v2 provider
-    // refer to https://github.com/TxnLab/use-wallet for detailed integration instructions
   ]
 }
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<string>('home')
+  
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+  }
+
+  const renderPage = () => {
+    switch (activeTab) {
+      case 'home':
+        return <Home setActiveTab={handleTabChange} />
+      case 'agents':
+        return <Agents />
+      case 'payments':
+        return <Payments />
+      case 'tasks':
+        return <Tasks />
+      default:
+        return <Home setActiveTab={handleTabChange} />
+    }
+  }
+
   const algodConfig = getAlgodConfigFromViteEnvironment()
 
   const walletManager = new WalletManager({
@@ -49,7 +73,9 @@ export default function App() {
   return (
     <SnackbarProvider maxSnack={3}>
       <WalletProvider manager={walletManager}>
-        <Home />
+        <PageLayout activeTab={activeTab} setActiveTab={handleTabChange}>
+          {renderPage()}
+        </PageLayout>
       </WalletProvider>
     </SnackbarProvider>
   )
