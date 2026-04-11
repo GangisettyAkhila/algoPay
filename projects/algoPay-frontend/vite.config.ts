@@ -12,4 +12,13 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['algosdk'],
+    esbuildOptions: {
+      target: 'esnext',
+    },
+  },
+  build: {
+    target: 'esnext',
+  },
 })

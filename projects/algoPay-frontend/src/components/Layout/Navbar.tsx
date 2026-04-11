@@ -1,64 +1,40 @@
-import { useWallet } from '@txnlab/use-wallet-react'
-import { formatAddress } from '../../utils/format'
-import ConnectWallet from '../ConnectWallet'
 import { useState } from 'react'
+import { useWallet } from '../../context/WalletContext'
+import ConnectWallet from '../ConnectWallet'
 
-interface NavbarProps {
-  activeTab: string
-  setActiveTab: (tab: string) => void
-}
-
-export default function Navbar({ activeTab, setActiveTab }: NavbarProps) {
-  const { activeAddress, wallets } = useWallet()
+export default function Navbar() {
+  const { address, balance, isConnected } = useWallet()
   const [showWalletModal, setShowWalletModal] = useState(false)
-
-  const disconnect = async () => {
-    const active = wallets?.find((w) => w.isActive)
-    if (active) {
-      await active.disconnect()
-    }
-  }
-
-  const navItems = [
-    { id: 'home', label: 'Home', icon: '🏠' },
-    { id: 'agents', label: 'Agents', icon: '🤖' },
-    { id: 'payments', label: 'Payments', icon: '💸' },
-    { id: 'tasks', label: 'Tasks', icon: '📋' },
-  ]
 
   return (
     <>
       <nav className="navbar">
-        <div className="navbar-brand" onClick={() => setActiveTab('home')} style={{ cursor: 'pointer' }}>
+        <div className="navbar-brand">
           <div className="navbar-logo">A</div>
           <span className="navbar-name">algoPay</span>
         </div>
 
-        <div className="navbar-nav">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-link ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(item.id)}
-            >
-              <span style={{ marginRight: '6px' }}>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </div>
-
         <div className="navbar-actions">
-          {activeAddress ? (
-            <button className="wallet-pill" onClick={disconnect}>
-              <span className="dot" />
-              {formatAddress(activeAddress)}
+          {isConnected ? (
+            <button 
+              className="wallet-pill" 
+              onClick={() => setShowWalletModal(true)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px', padding: '6px 14px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="dot" />
+                {address?.slice(0, 8)}...{address?.slice(-4)}
+              </div>
+              <div style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                {balance.toFixed(4)} ALGO
+              </div>
             </button>
           ) : (
             <button
               className="btn btn-primary btn-sm"
               onClick={() => setShowWalletModal(true)}
             >
-              🔗 Connect Wallet
+              🦊 Connect Wallet
             </button>
           )}
         </div>
