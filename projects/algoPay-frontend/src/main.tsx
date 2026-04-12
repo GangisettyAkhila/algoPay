@@ -17,6 +17,8 @@ const walletManager = new WalletManager({
   defaultNetwork: NetworkId.TESTNET
 })
 
+console.log("API URL:", import.meta.env.VITE_API_URL);
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
