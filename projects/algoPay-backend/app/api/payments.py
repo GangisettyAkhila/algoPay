@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timedelta
-import pytz
+from zoneinfo import ZoneInfo
 import asyncio
 from app.core.agent_executor import agent_executor
 from app.services.payment_executor import payment_executor
@@ -16,7 +16,7 @@ from app.services.payment_executor import payment_executor
 router = APIRouter(prefix="/api", tags=["payments"])
 
 # ============== IST TIMEZONE ==============
-IST = pytz.timezone("Asia/Kolkata")
+IST = ZoneInfo("Asia/Kolkata")
 
 
 def now_ist() -> datetime:
@@ -27,7 +27,7 @@ def now_ist() -> datetime:
 def to_ist(dt: datetime) -> datetime:
     """Convert any datetime to IST"""
     if dt.tzinfo is None:
-        return IST.localize(dt)
+        dt = dt.replace(tzinfo=IST)
     return dt.astimezone(IST)
 
 
@@ -37,7 +37,7 @@ def parse_deadline(deadline_str: str) -> datetime:
         # Try parsing as ISO format
         dt = datetime.fromisoformat(deadline_str.replace("Z", "+05:30"))
         if dt.tzinfo is None:
-            dt = IST.localize(dt)
+            dt = dt.replace(tzinfo=IST)
         return dt
     except:
         raise ValueError(f"Invalid deadline format: {deadline_str}")
@@ -46,7 +46,7 @@ def parse_deadline(deadline_str: str) -> datetime:
 def format_ist(dt: datetime) -> str:
     """Format datetime as IST string"""
     if dt.tzinfo is None:
-        dt = IST.localize(dt)
+        dt = dt.replace(tzinfo=IST)
     return dt.strftime("%Y-%m-%dT%H:%M:%S+05:30")
 
 
