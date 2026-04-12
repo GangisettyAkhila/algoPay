@@ -5,7 +5,7 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   corePlugins: {
-    preflight: false,  // Disable Tailwind reset — our App.css design system handles global styles
+    preflight: true,
   },
   theme: {
     extend: {},

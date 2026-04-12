@@ -1,5 +1,5 @@
-import { Task } from '../../utils/algopayApi'
 import TaskCard from './TaskCard'
+import { Task } from '../../utils/algopayApi'
 
 interface TaskListProps {
   tasks: Task[]
@@ -7,99 +7,50 @@ interface TaskListProps {
 }
 
 export default function TaskList({ tasks, isLoading }: TaskListProps) {
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (a.status === 'pending' && b.status !== 'pending') return -1
-    if (a.status !== 'pending' && b.status === 'pending') return 1
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  })
-
-  const pendingCount = tasks.filter(t => t.status === 'pending').length
-  const paidCount = tasks.filter(t => t.status === 'paid').length
-  const rejectedCount = tasks.filter(t => t.status === 'rejected').length
-
   if (isLoading) {
     return (
-      <div className="card">
-        <div className="section-header" style={{ marginBottom: '20px' }}>
-          <div>
-            <h2 className="section-title" style={{ fontSize: '1.1rem' }}>Payment Tasks</h2>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {[1, 2, 3].map((i) => (
-            <div key={i} style={{
-              height: '108px',
-              background: 'var(--bg-elevated)',
-              borderRadius: 'var(--radius-md)',
-              animation: 'pulse-dot 1.5s ease-in-out infinite',
-              opacity: 0.5,
-            }} />
-          ))}
-        </div>
+      <div className="flex flex-col gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="card h-24 animate-pulse bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800" />
+        ))}
       </div>
     )
   }
 
   if (tasks.length === 0) {
     return (
-      <div className="card">
-        <div className="section-header" style={{ marginBottom: '20px' }}>
-          <h2 className="section-title" style={{ fontSize: '1.1rem' }}>Payment Tasks</h2>
-        </div>
-        <div className="empty-state">
-          <div className="empty-icon">📋</div>
-          <h3>No tasks yet</h3>
-          <p>Create a task above to schedule an autonomous payment</p>
-        </div>
+      <div className="card text-center py-16 bg-zinc-50 dark:bg-zinc-900/50 border-dashed border-2">
+        <div className="text-3xl mb-4">📭</div>
+        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-widest">No Active Tasks</h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+          Your scheduled payments will appear here once created.
+        </p>
       </div>
     )
   }
 
-  return (
-    <div className="card">
-      {/* Header */}
-      <div className="section-header" style={{ marginBottom: '20px' }}>
-        <div>
-          <h2 className="section-title" style={{ fontSize: '1.1rem', marginBottom: '2px' }}>Payment Tasks</h2>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Auto-polled every 5s · Sorted by priority</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {pendingCount > 0 && (
-            <span style={{
-              padding: '3px 10px', borderRadius: '50px',
-              background: 'rgba(245,158,11,0.12)', color: 'var(--accent-amber)',
-              fontSize: '0.72rem', fontWeight: 700, border: '1px solid rgba(245,158,11,0.25)',
-            }}>
-              {pendingCount} pending
-            </span>
-          )}
-          {paidCount > 0 && (
-            <span style={{
-              padding: '3px 10px', borderRadius: '50px',
-              background: 'rgba(16,185,129,0.12)', color: 'var(--accent-emerald)',
-              fontSize: '0.72rem', fontWeight: 700, border: '1px solid rgba(16,185,129,0.25)',
-            }}>
-              {paidCount} paid
-            </span>
-          )}
-          {rejectedCount > 0 && (
-            <span style={{
-              padding: '3px 10px', borderRadius: '50px',
-              background: 'rgba(244,63,94,0.12)', color: 'var(--accent-rose)',
-              fontSize: '0.72rem', fontWeight: 700, border: '1px solid rgba(244,63,94,0.25)',
-            }}>
-              {rejectedCount} rejected
-            </span>
-          )}
-        </div>
-      </div>
+  // Sort: pending first, then by deadline
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.status === b.status) {
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    }
+    return a.status === 'pending' ? -1 : 1
+  })
 
-      {/* Task list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {sortedTasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+          Scheduled Tasks ({tasks.length})
+        </h3>
+        <div className="text-[10px] text-zinc-400 font-medium">
+          Polling every 5s
+        </div>
       </div>
+      
+      {sortedTasks.map((task) => (
+        <TaskCard key={task.id} task={task} />
+      ))}
     </div>
   )
 }

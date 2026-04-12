@@ -1,93 +1,58 @@
-import type { ActivityLog as ActivityLogType } from '../../utils/algopayApi'
+import { ActivityLog as ActivityLogType } from '../../utils/algopayApi'
 
 interface ActivityLogProps {
   logs: ActivityLogType[]
   isLoading: boolean
 }
 
-const TYPE_CONFIG = {
-  success: {
-    color: 'var(--accent-emerald)',
-    bg: 'rgba(16,185,129,0.08)',
-    icon: '✅',
-  },
-  error: {
-    color: 'var(--accent-rose)',
-    bg: 'rgba(244,63,94,0.08)',
-    icon: '❌',
-  },
-  info: {
-    color: 'var(--text-secondary)',
-    bg: 'rgba(148,163,184,0.06)',
-    icon: '🔵',
-  },
+const logConfig = {
+  info: { icon: 'ℹ️', color: 'text-zinc-500 dark:text-zinc-400', bg: 'bg-zinc-50 dark:bg-zinc-900' },
+  success: { icon: '✅', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/10' },
+  error: { icon: '❌', color: 'text-red-500 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/10' },
 }
 
 export default function ActivityLog({ logs, isLoading }: ActivityLogProps) {
-  const reversedLogs = [...logs].reverse().slice(0, 60)
-
   return (
-    <div className="card" style={{ position: 'sticky', top: '84px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div>
-          <h2 className="section-title" style={{ fontSize: '1.1rem', marginBottom: '2px' }}>Activity</h2>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Real-time blockchain events</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: 'var(--accent-emerald)',
-            boxShadow: '0 0 8px var(--accent-emerald)',
-            animation: 'pulse-dot 2s ease-in-out infinite',
-          }} />
-          <span style={{ fontSize: '0.7rem', color: 'var(--accent-emerald)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Live
-          </span>
-        </div>
+    <div className="card slide-up h-full flex flex-col max-h-[800px]">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+        <h3 className="section-title text-zinc-900 dark:text-zinc-100">Audit Logs</h3>
+        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Real-time</span>
       </div>
 
       {isLoading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} style={{
-              height: '52px',
-              background: 'var(--bg-elevated)',
-              borderRadius: 'var(--radius-sm)',
-              opacity: 0.4,
-              animation: 'pulse-dot 1.5s ease-in-out infinite',
-            }} />
+        <div className="space-y-4">
+          {[1, 2, 4, 5].map((i) => (
+            <div key={i} className="h-12 w-full bg-zinc-50 dark:bg-zinc-900 animate-pulse rounded-lg" />
           ))}
         </div>
-      ) : reversedLogs.length === 0 ? (
-        <div className="empty-state" style={{ paddingTop: '40px', paddingBottom: '40px' }}>
-          <div className="empty-icon" style={{ fontSize: '2rem' }}>⚡</div>
-          <h3 style={{ fontSize: '0.95rem' }}>No activity yet</h3>
-          <p style={{ fontSize: '0.8rem' }}>Events appear as tasks execute</p>
+      ) : logs.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-50">
+          <span className="text-2xl mb-2">🐚</span>
+          <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">No activity yet</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '520px', overflowY: 'auto', paddingRight: '4px' }}>
-          {reversedLogs.map((log) => {
-            const config = TYPE_CONFIG[log.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.info
+        <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+          {logs.map((log) => {
+            const config = logConfig[log.type] || logConfig.info
             return (
-              <div key={log.id} style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                padding: '10px 12px',
-                borderRadius: 'var(--radius-sm)',
-                background: config.bg,
-                border: '1px solid transparent',
-                transition: 'border-color var(--transition)',
-              }}>
-                <span style={{ fontSize: '0.75rem', flexShrink: 0, marginTop: '1px' }}>{config.icon}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: '2px' }}>
-                    {log.timestamp}
+              <div
+                key={log.id}
+                className={`p-3 rounded-lg border border-transparent transition-all hover:border-zinc-100 dark:hover:border-zinc-800 ${config.bg}`}
+              >
+                <div className="flex gap-3">
+                  <span className="text-xs flex-shrink-0 mt-0.5">{config.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter mb-1">
+                      {new Date(log.timestamp).toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                      })}
+                    </div>
+                    <p className={`text-xs font-medium leading-relaxed ${config.color}`}>
+                      {log.message}
+                    </p>
                   </div>
-                  <p style={{ fontSize: '0.8rem', color: config.color, wordBreak: 'break-word', lineHeight: 1.5 }}>
-                    {log.message}
-                  </p>
                 </div>
               </div>
             )

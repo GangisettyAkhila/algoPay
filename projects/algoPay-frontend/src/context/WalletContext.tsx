@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { peraWallet, fetchBalance, disconnectWallet as peraDisconnect } from '../utils/wallet'
+import { useWallet as useLibWallet } from '@txnlab/use-wallet-react'
+import { fetchBalance } from '../utils/wallet'
 
 interface WalletState {
   address: string | null
   balance: number
   isConnected: boolean
   isConnecting: boolean
-  connect: () => Promise<void>
+  connect: (id?: string) => Promise<void>
   disconnect: () => void
   refreshBalance: () => Promise<void>
 }
@@ -26,93 +27,72 @@ interface WalletProviderProps {
 }
 
 export function WalletProvider({ children }: WalletProviderProps) {
-  const [address, setAddress] = useState<string | null>(null)
+  const { 
+    wallets, 
+    activeAccount, 
+    activeAddress, 
+  } = useLibWallet()
+  
   const [balance, setBalance] = useState(0)
   const [isConnecting, setIsConnecting] = useState(false)
 
-  const isConnected = !!address
+  const isConnected = !!activeAddress
 
   const refreshBalance = useCallback(async () => {
-    if (address) {
-      const newBalance = await fetchBalance(address)
+    if (activeAddress) {
+      const newBalance = await fetchBalance(activeAddress)
       setBalance(newBalance)
     }
-  }, [address])
+  }, [activeAddress])
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (id: string = 'pera') => {
+    console.log(`Connecting wallet: ${id}...`)
     setIsConnecting(true)
     try {
-      const accounts = await peraWallet.connect()
-      if (accounts && accounts.length > 0) {
-        const walletAddress = accounts[0]
-        setAddress(walletAddress)
-        localStorage.setItem('perawallet_address', walletAddress)
-        
-        const newBalance = await fetchBalance(walletAddress)
-        setBalance(newBalance)
+      const wallet = wallets.find(w => w.id === id)
+      if (!wallet) {
+        throw new Error(`Wallet provider "${id}" not found`)
       }
+      
+      const accounts = await wallet.connect()
+      console.log("Active account connected:", accounts[0])
     } catch (error) {
-      console.error('Failed to connect wallet:', error)
+      console.error("Wallet connection failed:", error)
+      throw error // Re-throw to handle in UI
     } finally {
       setIsConnecting(false)
     }
-  }, [])
+  }, [wallets])
 
-  const disconnect = useCallback(() => {
-    peraDisconnect()
-    setAddress(null)
+  const disconnect = useCallback(async () => {
+    const activeWallet = wallets.find(w => w.isActive)
+    if (activeWallet) {
+      await activeWallet.disconnect()
+    }
     setBalance(0)
-    localStorage.removeItem('perawallet_address')
-    localStorage.removeItem('perawallet_session')
-  }, [])
+  }, [wallets])
 
-  // Only reconnect if user previously connected (check localStorage)
+  // Debug logging
   useEffect(() => {
-    const storedAddress = localStorage.getItem('perawallet_address')
-    
-    if (storedAddress) {
-      const reconnectSession = async () => {
-        try {
-          const accounts = await peraWallet.reconnectSession()
-          if (accounts && accounts.length > 0) {
-            const walletAddress = accounts[0]
-            setAddress(walletAddress)
-          } else {
-            // Session invalid, clear storage
-            localStorage.removeItem('perawallet_address')
-          }
-        } catch (error) {
-          console.log('No valid session to reconnect')
-          localStorage.removeItem('perawallet_address')
-        }
-      }
-      
-      reconnectSession()
+    if (activeAccount) {
+      console.log("Active account updated:", activeAccount.address)
     }
+  }, [activeAccount])
 
-    const handleDisconnect = () => {
-      setAddress(null)
-      setBalance(0)
-      localStorage.removeItem('perawallet_address')
-      localStorage.removeItem('perawallet_session')
-    }
-    
-    peraWallet.connector?.on('disconnect', handleDisconnect)
-  }, [])
-
+  // Balance polling
   useEffect(() => {
-    if (address) {
+    if (activeAddress) {
       refreshBalance()
       const interval = setInterval(refreshBalance, 30000)
       return () => clearInterval(interval)
     }
     return undefined
-  }, [address, refreshBalance])
+  }, [activeAddress, refreshBalance])
 
   return (
     <WalletContext.Provider
       value={{
-        address,
+        address: activeAddress || null,
         balance,
         isConnected,
         isConnecting,

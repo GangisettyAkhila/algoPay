@@ -82,7 +82,7 @@ export default function ConnectWallet({ open = true, onClose }: ConnectWalletPro
               <div style={{ textAlign: 'center' }}>
                 <button
                   className="btn btn-primary btn-lg"
-                  onClick={connect}
+                  onClick={() => connect('pera')}
                   disabled={isConnecting}
                   style={{ minWidth: '200px' }}
                 >

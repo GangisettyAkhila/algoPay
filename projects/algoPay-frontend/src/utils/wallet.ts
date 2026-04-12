@@ -4,10 +4,14 @@ export const peraWallet = new PeraWalletConnect()
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
-const EXPLORER_BASE_URL = import.meta.env.VITE_EXPLORER_BASE_URL || 'https://testnet.algoexplorer.io'
+const EXPLORER_BASE_URL = import.meta.env.VITE_EXPLORER_BASE_URL || 'https://lora.algokit.io/testnet'
 
 export function getExplorerUrl(txId: string): string {
   return `${EXPLORER_BASE_URL}/tx/${txId}`
+}
+
+export function getAccountUrl(address: string): string {
+  return `${EXPLORER_BASE_URL}/account/${address}`
 }
 
 function getIndexerUrl(): string {

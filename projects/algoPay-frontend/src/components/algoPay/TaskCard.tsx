@@ -4,145 +4,110 @@ interface TaskCardProps {
   task: Task
 }
 
-const STATUS_CONFIG = {
+const statusConfig = {
   pending: {
-    color: 'var(--accent-amber)',
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.2)',
-    dot: 'var(--accent-amber)',
     label: 'Pending',
-    pulse: true,
+    color: 'emerald',
+    icon: '⏳',
+    className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50'
   },
   paid: {
-    color: 'var(--accent-emerald)',
-    bg: 'rgba(16,185,129,0.08)',
-    border: 'rgba(16,185,129,0.2)',
-    dot: 'var(--accent-emerald)',
-    label: 'Paid',
-    pulse: false,
+    label: 'Executed',
+    color: 'zinc',
+    icon: '✅',
+    className: 'bg-zinc-50 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-400 border-zinc-100 dark:border-zinc-800'
   },
   rejected: {
-    color: 'var(--accent-rose)',
-    bg: 'rgba(244,63,94,0.08)',
-    border: 'rgba(244,63,94,0.2)',
-    dot: 'var(--accent-rose)',
-    label: 'Rejected',
-    pulse: false,
+    label: 'Failed',
+    color: 'red',
+    icon: '❌',
+    className: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border-red-100 dark:border-red-900/50'
   },
+}
+
+function formatDate(timestamp: string): string {
+  return new Date(timestamp).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
 }
 
 function formatDeadline(deadline: string): string {
   const date = new Date(deadline)
   const now = new Date()
   const diff = date.getTime() - now.getTime()
-  if (diff < 0) return 'Overdue'
+  
+  if (diff < 0) return 'Executing...'
+
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-  if (hours > 24) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  
+  if (hours > 24) return formatDate(deadline)
   if (hours > 0) return `${hours}h ${minutes}m`
   return `${minutes}m`
 }
 
 export default function TaskCard({ task }: TaskCardProps) {
-  const s = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending
-  const explorerUrl = task.txid ? `https://testnet.algoexplorer.io/tx/${task.txid}` : null
+  const explorerUrl = task.txid ? `https://lora.algokit.io/testnet/tx/${task.txid}` : null
+  const createdLocal = formatDate(task.created_at)
+  const isExecuting = task.status === 'pending' && new Date(task.deadline).getTime() <= Date.now()
+  const currentStatus = isExecuting ? { ...statusConfig.pending, label: 'Executing...' } : statusConfig[task.status]
 
   return (
-    <div style={{
-      background: 'var(--bg-elevated)',
-      border: `1px solid ${s.border}`,
-      borderRadius: 'var(--radius-md)',
-      padding: '16px 20px',
-      transition: 'all var(--transition)',
-      cursor: 'default',
-    }}
-    onMouseEnter={(e) => {
-      const el = e.currentTarget as HTMLDivElement
-      el.style.transform = 'translateY(-1px)'
-      el.style.boxShadow = '0 6px 24px rgba(0,0,0,0.3)'
-    }}
-    onMouseLeave={(e) => {
-      const el = e.currentTarget as HTMLDivElement
-      el.style.transform = ''
-      el.style.boxShadow = ''
-    }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-        {/* Left: status + title + time */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Status badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span style={{
-              width: 8, height: 8, borderRadius: '50%',
-              background: s.dot, flexShrink: 0,
-              boxShadow: s.pulse ? `0 0 8px ${s.dot}` : 'none',
-              animation: s.pulse ? 'pulse-dot 1.8s ease-in-out infinite' : 'none',
-            }} />
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {s.label}
+    <div className={`card fade-in ${task.status === 'pending' ? 'border-l-2 border-l-emerald-500' : ''}`}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-1.5">
+            <span className={`tag ${currentStatus.className}`}>
+              {currentStatus.icon} {currentStatus.label}
             </span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: 4 }}>
-              {new Date(task.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+              ID: {task.id.slice(0, 8)}
             </span>
           </div>
-
-          {/* Title */}
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-100 truncate">
             {task.title}
-          </h3>
-
-          {/* Recipient */}
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-            To: {task.recipient.slice(0, 10)}…{task.recipient.slice(-6)}
-          </p>
+          </h4>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Recipient:</span>
+              <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400">
+                {task.recipient.slice(0, 6)}…{task.recipient.slice(-6)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Created:</span>
+              <span className="text-xs text-zinc-600 dark:text-zinc-400">{createdLocal}</span>
+            </div>
+          </div>
         </div>
 
-        {/* Right: amount */}
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1 }}>
-            {task.amount.toFixed(3)}
+        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 border-t md:border-t-0 md:border-l border-zinc-100 dark:border-zinc-800 pt-4 md:pt-0 md:pl-8 min-w-[140px]">
+          <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            {task.amount.toFixed(3)} <span className="text-xs text-zinc-400 font-medium">ALGO</span>
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--accent-teal)', fontWeight: 700, marginTop: '2px' }}>ALGO</div>
-        </div>
-      </div>
-
-      {/* Bottom divider + detail */}
-      <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-card)' }}>
-        {task.status === 'pending' && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>⏱ Executes in</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--accent-amber)' }}>
-              {formatDeadline(task.deadline)}
-            </span>
-          </div>
-        )}
-
-        {task.status === 'paid' && explorerUrl && (
-          <a href={explorerUrl} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', textDecoration: 'none' }}
-          >
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>✅ Transaction</span>
-            <span style={{
-              fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--accent-teal)',
-              padding: '2px 8px', background: 'rgba(20,184,166,0.1)', borderRadius: '6px',
-              transition: 'background var(--transition)',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(20,184,166,0.2)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(20,184,166,0.1)')}
+          
+          {task.status === 'pending' ? (
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Due in</span>
+              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                {formatDeadline(task.deadline)}
+              </span>
+            </div>
+          ) : explorerUrl ? (
+            <a
+              href={explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
             >
-              {task.txid?.slice(0, 10)}…{task.txid?.slice(-8)} ↗
-            </span>
-          </a>
-        )}
-
-        {task.status === 'rejected' && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>❌ Reason</span>
-            <span style={{ fontSize: '0.78rem', color: 'var(--accent-rose)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {task.error || 'Rule violation'}
-            </span>
-          </div>
-        )}
+              View Transaction ↗
+            </a>
+          ) : (
+            <span className="text-[10px] font-bold text-zinc-400 italic">Processing...</span>
+          )}
+        </div>
       </div>
     </div>
   )
