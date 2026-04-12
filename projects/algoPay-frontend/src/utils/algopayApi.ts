@@ -6,11 +6,12 @@ export interface Task {
   amount: number
   recipient: string
   deadline: string
-  status: 'pending' | 'paid' | 'rejected'
+  status: 'pending' | 'executing' | 'paid' | 'failed'
   txid?: string
   error?: string
   paid_at?: string
   created_at: string
+  executed_at?: string
 }
 
 export interface CreateTaskRequest {

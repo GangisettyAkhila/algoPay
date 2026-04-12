@@ -6,7 +6,6 @@ import ActivityLog from '../components/algoPay/ActivityLog'
 import {
   fetchTasks,
   createTask,
-  fetchWalletBalance,
   fetchActivityLogs,
   Task,
   CreateTaskRequest,
@@ -18,7 +17,6 @@ export default function Dashboard() {
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [logs, setLogs] = useState<ActivityLogType[]>([])
-  const [backendBalance, setBackendBalance] = useState(0)
   const [isLoadingTasks, setIsLoadingTasks] = useState(true)
   const [isLoadingLogs, setIsLoadingLogs] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -26,19 +24,17 @@ export default function Dashboard() {
 
   const loadData = useCallback(async (isInitial = false) => {
     try {
-      const [tasksData, logsData, balanceData] = await Promise.all([
+      const [tasksData, logsData] = await Promise.all([
         fetchTasks(),
         fetchActivityLogs(),
-        fetchWalletBalance(),
       ])
       setTasks(tasksData)
       setLogs(logsData)
-      setBackendBalance(balanceData)
       setError(null)
     } catch (err) {
       console.error('Failed to load data:', err)
       if (isInitial) {
-        setError('Cannot reach backend. Please check backend deployment.')
+        setError('Cannot reach backend')
       }
     } finally {
       setIsLoadingTasks(false)
@@ -67,16 +63,17 @@ export default function Dashboard() {
 
   const pendingCount = tasks.filter(t => t.status === 'pending').length
   const paidCount = tasks.filter(t => t.status === 'paid').length
+  const failedCount = tasks.filter(t => t.status === 'failed').length
 
   if (error && !isLoadingTasks) {
     return (
       <div className="app-layout pt-12">
-        <div className="bg-red-50 border border-red-100 dark:bg-red-900/10 dark:border-red-900/30 rounded-xl p-8 max-w-lg mx-auto text-center flex flex-col items-center gap-4">
-          <div className="text-3xl">⚠️</div>
-          <h3 className="font-bold text-red-800 dark:text-red-400">Backend Unreachable</h3>
-          <p className="text-sm text-red-700/70 dark:text-red-400/60 leading-relaxed">{error}</p>
-          <button className="btn btn-secondary mt-2" onClick={() => loadData(true)}>
-            ↺ Retry Connection
+        <div className="bg-red-50 border border-red-100 rounded-xl p-8 max-w-lg mx-auto text-center">
+          <div className="text-3xl mb-4">⚠️</div>
+          <h3 className="font-bold text-red-800">Backend Unreachable</h3>
+          <p className="text-sm text-red-600 mt-2">{error}</p>
+          <button className="btn btn-secondary mt-4" onClick={() => loadData(true)}>
+            Retry
           </button>
         </div>
       </div>
@@ -85,62 +82,52 @@ export default function Dashboard() {
 
   return (
     <main className="app-layout fade-in">
-      {/* Dashboard header */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">
             Payment Dashboard
           </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
-            Autonomous Algorand payments · Live status polling
+          <p className="text-zinc-500 text-sm mt-1">
+            Autonomous payments on Algorand · Time in IST
           </p>
         </div>
         
-        <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 min-w-[300px]">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Active Agent</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Running</span>
-            </div>
+        {/* User wallet only - not agent wallet */}
+        <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-w-[280px]">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase">Your Wallet</span>
           </div>
-          <div className="text-sm font-mono text-zinc-900 dark:text-zinc-200 mb-3 truncate">
+          <div className="text-xs font-mono text-zinc-600 mb-2 truncate">
             {address}
           </div>
-          <div className="flex gap-4">
-            <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-zinc-400 uppercase">Wallet</span>
-              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{balance.toFixed(3)} ALGO</span>
-            </div>
-            <div className="flex flex-col border-l border-zinc-200 dark:border-zinc-700 pl-4">
-              <span className="text-[9px] font-bold text-zinc-400 uppercase">Agent Fund</span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{backendBalance.toFixed(3)} ALGO</span>
-            </div>
+          <div className="text-lg font-bold text-emerald-600">
+            {balance.toFixed(3)} ALGO
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {[
-          { label: 'Total Tasks', value: tasks.length, icon: '📋' },
-          { label: 'Pending', value: pendingCount, icon: '⏳' },
-          { label: 'Executed', value: paidCount, icon: '✅' },
-        ].map(({ label, value, icon }) => (
-          <div key={label} className="card flex items-center gap-5">
-            <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xl">
-              {icon}
+          { label: 'Total Tasks', value: tasks.length },
+          { label: 'Pending', value: pendingCount },
+          { label: 'Executed', value: paidCount },
+        ].map(({ label, value }) => (
+          <div key={label} className="card flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-lg">
+              {label === 'Total Tasks' ? '📋' : label === 'Pending' ? '⏳' : '✅'}
             </div>
             <div>
-              <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{label}</div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{value}</div>
+              <div className="text-xs text-zinc-500">{label}</div>
+              <div className="text-xl font-bold text-zinc-900">{value}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
         <div className="flex flex-col gap-8">
           <TaskForm
             onSubmit={handleCreateTask}
