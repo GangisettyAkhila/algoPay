@@ -2,7 +2,7 @@ import { PeraWalletConnect } from '@perawallet/connect'
 
 export const peraWallet = new PeraWalletConnect()
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://algopay-backend.onrender.com'
 
 const EXPLORER_BASE_URL = import.meta.env.VITE_EXPLORER_BASE_URL || 'https://lora.algokit.io/testnet'
 
