@@ -34,7 +34,7 @@ export default function TaskList({ tasks, isLoading }: TaskListProps) {
 
   // Sort: pending first, then by deadline
   const sortedTasks = [...safeTasks].sort((a, b) => {
-    const statusOrder = { pending: 0, executing: 1, paid: 2, failed: 3 }
+    const statusOrder: Record<string, number> = { pending: 0, executing: 1, rule_blocked: 2, paid: 3, failed: 4 }
     const aOrder = statusOrder[a.status] ?? 0
     const bOrder = statusOrder[b.status] ?? 0
     

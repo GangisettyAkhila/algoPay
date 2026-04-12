@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://algopay-backend.onrender.com'
 
 // Status type for type safety
-export type TaskStatus = 'pending' | 'executing' | 'paid' | 'failed'
+export type TaskStatus = 'pending' | 'executing' | 'paid' | 'failed' | 'rule_blocked'
 
 // Default values for defensive handling
 const defaultTask: Task = {

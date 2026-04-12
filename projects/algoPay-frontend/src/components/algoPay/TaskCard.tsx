@@ -9,6 +9,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: string;
   executing: { label: 'Processing...', color: 'amber', icon: '⚡', className: 'bg-amber-50 text-amber-700 border-amber-100' },
   paid: { label: 'Paid', color: 'emerald', icon: '✅', className: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
   failed: { label: 'Failed', color: 'red', icon: '❌', className: 'bg-red-50 text-red-700 border-red-100' },
+  rule_blocked: { label: 'Blocked by Agent', color: 'orange', icon: '🚫', className: 'bg-orange-50 text-orange-700 border-orange-100' },
 }
 
 const defaultStatus = { label: 'Unknown', color: 'zinc', icon: '❓', className: 'bg-zinc-50 text-zinc-400 border-zinc-100' }

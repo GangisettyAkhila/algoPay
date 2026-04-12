@@ -1,7 +1,7 @@
 """
 Payment API Routes with Agent Loop
 All time handling is in IST (Asia/Kolkata)
-Safe, idempotent execution with double-execution prevention
+Safe, idempotent execution with rule engine enforcement
 """
 
 from fastapi import APIRouter, HTTPException
@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 import asyncio
 import threading
 from app.core.agent_executor import agent_executor
+from app.core.rule_engine import rule_engine
 from app.services.payment_executor import payment_executor
 
 
@@ -208,6 +209,27 @@ async def execute_task_safe(task_id: str) -> Optional[Task]:
             print(f"[TASK] FAILED: Invalid amount for {task_id}")
             return task
 
+        # ===== RULE ENGINE VALIDATION =====
+        print(f"[TASK] Running rule engine checks...")
+
+        # Get agent balance in ALGO for rule engine
+        balance_algo = balance_before / 1_000_000
+
+        # Validate against all rules
+        validation = rule_engine.validate(
+            sender=agent_address,
+            receiver=task.recipient,
+            amount=task.amount,
+            agent_balance=balance_algo,
+        )
+
+        # If rules not passed, block the transaction
+        if not validation.approved:
+            task.status = "rule_blocked"
+            task.error = f"Agent Rule: {validation.message}"
+            print(f"[TASK] RULE BLOCKED: {task_id} - {validation.message}")
+            return task
+
         print(f"[TASK] All safety checks passed for {task_id}")
         print(
             f"[TASK] Executing payment: {task.amount} ALGO → {task.recipient[:10]}..."
@@ -242,6 +264,9 @@ async def execute_task_safe(task_id: str) -> Optional[Task]:
                 task.status = "paid"
                 task.txid = result.txid
                 task.paid_at = format_ist(now_ist())
+
+                # Record in rule engine for daily tracking
+                rule_engine.record_payment(task.amount)
 
                 balance_after = payment_executor.get_balance(agent_address)
 
@@ -444,8 +469,17 @@ async def get_logs(limit: int = 100) -> dict:
 
 @router.get("/status")
 async def get_status() -> dict:
-    """Get agent status"""
-    return agent_executor.get_status()
+    """Get agent status including rule engine stats"""
+    executor_status = agent_executor.get_status()
+    rule_stats = rule_engine.get_daily_stats()
+    agent_address = get_backend_sender()
+    agent_balance = payment_executor.get_balance(agent_address) / 1_000_000
+
+    return {
+        **executor_status,
+        "rule_engine": rule_stats,
+        "agent_balance_algo": agent_balance,
+    }
 
 
 @router.get("/health")
