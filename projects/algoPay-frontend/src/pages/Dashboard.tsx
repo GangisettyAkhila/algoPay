@@ -38,7 +38,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Failed to load data:', err)
       if (isInitial) {
-        setError('Cannot reach backend. Make sure the Python server is running on port 8000.')
+        setError('Cannot reach backend. Please check backend deployment.')
       }
     } finally {
       setIsLoadingTasks(false)
