@@ -8,6 +8,7 @@ import {
   createTask,
   fetchActivityLogs,
   Task,
+  TaskStatus,
   CreateTaskRequest,
   ActivityLog as ActivityLogType
 } from '../utils/algopayApi'
@@ -24,13 +25,17 @@ export default function Dashboard() {
 
   const loadData = useCallback(async (isInitial = false) => {
     try {
+      console.log('Loading data...')
       const [tasksData, logsData] = await Promise.all([
         fetchTasks(),
         fetchActivityLogs(),
       ])
-      setTasks(tasksData)
-      setLogs(logsData)
+      
+      // Defensive: ensure arrays
+      setTasks(Array.isArray(tasksData) ? tasksData : [])
+      setLogs(Array.isArray(logsData) ? logsData : [])
       setError(null)
+      console.log('Data loaded:', tasksData?.length ?? 0, 'tasks')
     } catch (err) {
       console.error('Failed to load data:', err)
       if (isInitial) {
@@ -61,9 +66,10 @@ export default function Dashboard() {
     }
   }
 
-  const pendingCount = tasks.filter(t => t.status === 'pending').length
-  const paidCount = tasks.filter(t => t.status === 'paid').length
-  const failedCount = tasks.filter(t => t.status === 'failed').length
+  // Safe task counts with fallbacks
+  const pendingCount = tasks.filter(t => (t.status ?? 'pending') === 'pending').length
+  const paidCount = tasks.filter(t => (t.status ?? 'pending') === 'paid').length
+  const failedCount = tasks.filter(t => (t.status ?? 'pending') === 'failed').length
 
   if (error && !isLoadingTasks) {
     return (
@@ -93,16 +99,16 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* User wallet only - not agent wallet */}
+        {/* User wallet only */}
         <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-w-[280px]">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[10px] font-bold text-zinc-400 uppercase">Your Wallet</span>
           </div>
           <div className="text-xs font-mono text-zinc-600 mb-2 truncate">
-            {address}
+            {address ?? 'Not connected'}
           </div>
           <div className="text-lg font-bold text-emerald-600">
-            {balance.toFixed(3)} ALGO
+            {typeof balance === 'number' ? balance.toFixed(3) : '0.000'} ALGO
           </div>
         </div>
       </div>

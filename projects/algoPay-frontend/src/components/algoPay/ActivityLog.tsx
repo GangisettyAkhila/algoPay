@@ -1,7 +1,7 @@
 import { ActivityLog as ActivityLogType } from '../../utils/algopayApi'
 
 interface ActivityLogProps {
-  logs: ActivityLogType[]
+  logs: ActivityLogType[] | undefined | null
   isLoading: boolean
 }
 
@@ -12,6 +12,9 @@ const logConfig = {
 }
 
 export default function ActivityLog({ logs, isLoading }: ActivityLogProps) {
+  // Defensive: handle undefined/null
+  const safeLogs = Array.isArray(logs) ? logs : []
+
   return (
     <div className="card slide-up h-full flex flex-col max-h-[800px]">
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
@@ -25,14 +28,14 @@ export default function ActivityLog({ logs, isLoading }: ActivityLogProps) {
             <div key={i} className="h-12 w-full bg-zinc-50 dark:bg-zinc-900 animate-pulse rounded-lg" />
           ))}
         </div>
-      ) : logs.length === 0 ? (
+      ) : safeLogs.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-50">
           <span className="text-2xl mb-2">🐚</span>
           <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">No activity yet</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-          {logs.map((log) => {
+        <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+          {safeLogs.map((log) => {
             const config = logConfig[log.type] || logConfig.info
             return (
               <div
