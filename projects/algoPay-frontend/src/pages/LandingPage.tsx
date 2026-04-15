@@ -22,12 +22,12 @@ export default function LandingPage() {
           </span>
         </div>
 
-        <h1 className="text-5xl md:text-6xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-6" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <h1 className="text-5xl md:text-6xl font-extrabold text-[var(--text-primary)] tracking-tight mb-6" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
           Automate Payments <br />
-          <span className="text-zinc-500 dark:text-zinc-400">on Algorand</span>
+          <span className="text-[var(--text-secondary)]">on Algorand</span>
         </h1>
 
-        <p className="text-xl text-zinc-600 dark:text-zinc-400 mb-10 leading-relaxed">
+        <p className="text-xl text-[var(--text-secondary)] mb-10 leading-relaxed">
           Create payment tasks that execute automatically on-chain.
           Schedule deadlines, set recipients, and let the blockchain do the rest.
         </p>
@@ -58,7 +58,7 @@ export default function LandingPage() {
           </a>
         </div>
 
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-zinc-100 dark:border-zinc-800 pt-12">
+        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-[var(--border-color)] pt-12">
           {[
             { label: 'Latency', value: '3.3s' },
             { label: 'Fee', value: '0.001' },
@@ -66,10 +66,10 @@ export default function LandingPage() {
             { label: 'Network', value: 'Testnet' },
           ].map((stat) => (
             <div key={stat.label}>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              <div className="text-2xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                 {stat.value}
               </div>
-              <div className="text-xs font-semibold text-zinc-400 uppercase tracking-tighter mt-1">
+              <div className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-tighter mt-1">
                 {stat.label}
               </div>
             </div>

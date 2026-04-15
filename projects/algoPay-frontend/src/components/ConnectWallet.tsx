@@ -30,7 +30,7 @@ export default function ConnectWallet({ open = true, onClose }: ConnectWalletPro
                     width: '48px', 
                     height: '48px', 
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                    background: 'linear-gradient(135deg, var(--accent-color), #059669)',
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
@@ -57,7 +57,7 @@ export default function ConnectWallet({ open = true, onClose }: ConnectWalletPro
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <div className="form-label">Balance</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--accent-primary)' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--accent-color)' }}>
                     {balance.toFixed(4)} ALGO
                   </div>
                 </div>

@@ -15,31 +15,28 @@
 
 @layer base {
   :root {
-    --bg-base: #ffffff;
-    --bg-surface: #f8fafc;
-    --bg-elevated: #f1f5f9;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --border-subtle: #e2e8f0;
-    --border-card: #cbd5e1;
-    --accent-emerald: #10b981;
+    --bg-primary: #F9FAFB;
+    --bg-secondary: #F3F4F6;
+    --card-bg: #FFFFFF;
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --border-color: #E5E7EB;
+    --accent-color: #059669;
     --transition: 0.15s ease-out;
   }
 
   .dark {
-    --bg-base: #09090b;
-    --bg-surface: #18181b;
-    --bg-elevated: #27272a;
-    --text-primary: #f4f4f5;
-    --text-secondary: #a1a1aa;
-    --text-muted: #52525b;
-    --border-subtle: #27272a;
-    --border-card: #3f3f46;
+    --bg-primary: #0B0F19;
+    --bg-secondary: #1F2937;
+    --card-bg: #111827;
+    --text-primary: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --border-color: #1F2937;
+    --accent-color: #10b981;
   }
 
   body {
-    background-color: var(--bg-base);
+    background-color: var(--bg-primary);
     color: var(--text-primary);
     transition: background-color var(--transition), color var(--transition);
   }
@@ -48,19 +45,22 @@
 @layer components {
   .navbar {
     @apply sticky top-0 z-50 flex items-center justify-between px-8 h-16 border-b;
-    background-color: rgba(var(--bg-base), 0.8);
+    background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent);
     backdrop-filter: blur(12px);
-    border-color: var(--border-subtle);
+    border-color: var(--border-color);
   }
 
   .card {
     @apply rounded-xl p-6 transition-all duration-150 border;
-    background-color: var(--bg-surface);
-    border-color: var(--border-subtle);
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  }
+  .dark .card {
+    box-shadow: none;
   }
   .card:hover {
     @apply shadow-sm;
-    border-color: var(--border-card);
     transform: translateY(-1px);
   }
 
@@ -74,19 +74,27 @@
   }
 
   .btn-primary {
-    @apply bg-emerald-600 text-white hover:bg-emerald-500;
+    background-color: var(--accent-color);
+    color: white;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
   }
 
   .btn-secondary {
-    @apply bg-zinc-100 text-zinc-900 border border-zinc-200 hover:bg-zinc-200;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
   }
-  .dark .btn-secondary {
-    @apply bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700;
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--bg-secondary) 80%, var(--border-color));
   }
 
   .form-input {
-    @apply w-full px-4 py-2 bg-transparent border rounded-lg text-sm transition-all focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500;
-    border-color: var(--border-subtle);
+    @apply w-full px-4 py-2 border rounded-lg text-sm transition-all focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
   }
 
   .tag {
@@ -103,8 +111,9 @@
 
   .wallet-pill {
     @apply flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border;
-    background-color: var(--bg-surface);
-    border-color: var(--border-subtle);
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
   }
 
   .fade-in { animation: fadeIn 0.3s ease-out; }

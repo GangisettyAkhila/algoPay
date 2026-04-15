@@ -30,10 +30,10 @@ export default function Header() {
       <div className="flex items-center gap-10">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2.5 no-underline group">
-          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center font-bold text-white text-sm tracking-tight transition-transform group-hover:scale-105" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <div className="w-8 h-8 bg-[var(--accent-color)] rounded-lg flex items-center justify-center font-bold text-white text-sm tracking-tight transition-transform group-hover:scale-105" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             A
           </div>
-          <span className="text-zinc-900 dark:text-white font-bold text-lg tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <span className="text-[var(--text-primary)] font-bold text-lg tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             AlgoPay
           </span>
         </Link>
@@ -44,8 +44,8 @@ export default function Header() {
             to="/dashboard"
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               location.pathname === '/dashboard'
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+                ? 'bg-emerald-50 text-[var(--accent-color)] dark:bg-emerald-900/20'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             Dashboard
@@ -54,7 +54,7 @@ export default function Header() {
             href="https://lora.algokit.io/testnet"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-1.5 rounded-lg text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+            className="px-4 py-1.5 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             Explorer ↗
           </a>
@@ -65,7 +65,7 @@ export default function Header() {
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleDarkMode}
-          className="w-9 h-9 flex items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors"
           aria-label="Toggle Dark Mode"
         >
           {isDarkMode ? '🌞' : '🌙'}
@@ -74,8 +74,8 @@ export default function Header() {
         {isConnected ? (
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Balance</span>
-              <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{balance.toFixed(2)} ALGO</span>
+              <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-tighter">Balance</span>
+              <span className="text-sm font-bold text-[var(--text-primary)]">{balance.toFixed(2)} ALGO</span>
             </div>
             
             <a 
@@ -92,7 +92,7 @@ export default function Header() {
 
             <button
               onClick={disconnect}
-              className="btn btn-ghost px-2 text-xs font-bold uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="btn btn-ghost px-2 text-xs font-bold uppercase tracking-widest hover:text-[var(--accent-color)]"
             >
               Logout
             </button>

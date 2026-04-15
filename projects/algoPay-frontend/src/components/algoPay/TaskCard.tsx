@@ -12,7 +12,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: string;
   rule_blocked: { label: 'Blocked by Agent', color: 'orange', icon: '🚫', className: 'bg-orange-50 text-orange-700 border-orange-100' },
 }
 
-const defaultStatus = { label: 'Unknown', color: 'zinc', icon: '❓', className: 'bg-zinc-50 text-zinc-400 border-zinc-100' }
+const defaultStatus = { label: 'Unknown', color: 'zinc', icon: '❓', className: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-color)]' }
 
 function formatDate(timestamp: string | undefined): string {
   if (!timestamp) return 'N/A'
@@ -47,7 +47,7 @@ export default function TaskCard({ task }: TaskCardProps) {
   if (!task) {
     return (
       <div className="card">
-        <p className="text-zinc-400 text-sm">Loading task...</p>
+        <p className="text-[var(--text-secondary)] text-sm">Loading task...</p>
       </div>
     )
   }
@@ -59,6 +59,9 @@ export default function TaskCard({ task }: TaskCardProps) {
     recipient: task.recipient ?? '',
     deadline: task.deadline ?? new Date().toISOString(),
     status: task.status ?? 'pending',
+    funded: task.funded ?? false,
+    funding_txid: task.funding_txid ?? null,
+    locked_amount: task.locked_amount ?? 0,
     txid: task.txid ?? null,
     error: task.error ?? null,
     created_at: task.created_at ?? new Date().toISOString(),
@@ -85,16 +88,31 @@ export default function TaskCard({ task }: TaskCardProps) {
               )}
               {config.label}
             </span>
-            <span className="text-[10px] font-medium text-zinc-400">
+            
+            {/* Funding status badge */}
+            {safeTask.funded && safeTask.status === 'pending' && (
+              <span className="tag bg-emerald-50 text-emerald-700 border-emerald-100">
+                💰 Funded
+              </span>
+            )}
+            
+            {/* Not funded indicator */}
+            {!safeTask.funded && safeTask.status === 'pending' && (
+              <span className="tag bg-yellow-50 text-yellow-700 border-yellow-100">
+                ⚠️ Fund Required
+              </span>
+            )}
+            
+            <span className="text-[10px] font-medium text-[var(--text-secondary)]">
               {safeTask.id}
             </span>
           </div>
           
-          <h4 className="text-base font-semibold text-zinc-900">
+          <h4 className="text-base font-semibold text-[var(--text-primary)]">
             {safeTask.title}
           </h4>
           
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-zinc-500">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-[var(--text-secondary)]">
             <span>
               <span className="font-medium">To:</span> {formatAddress(safeTask.recipient)}
             </span>
@@ -110,16 +128,16 @@ export default function TaskCard({ task }: TaskCardProps) {
         </div>
 
         {/* Right side */}
-        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 border-t md:border-t-0 md:border-l border-zinc-100 pt-3 md:pt-0 md:pl-4 min-w-[120px]">
-          <div className="text-lg font-bold text-zinc-900">
-            {safeTask.amount.toFixed(3)} <span className="text-xs text-zinc-400">ALGO</span>
+        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 border-t md:border-t-0 md:border-l border-[var(--border-color)] pt-3 md:pt-0 md:pl-4 min-w-[120px]">
+          <div className="text-lg font-bold text-[var(--text-primary)]">
+            {safeTask.amount.toFixed(3)} <span className="text-xs text-[var(--text-secondary)]">ALGO</span>
           </div>
           
           {/* Status-specific UI */}
           {safeTask.status === 'pending' && (
             <div className="text-right">
-              <span className="text-[10px] font-medium text-zinc-400 block">Due in</span>
-              <span className="text-sm font-semibold text-emerald-600">
+              <span className="text-[10px] font-medium text-[var(--text-secondary)] block">Due in</span>
+              <span className="text-sm font-semibold text-[var(--accent-color)]">
                 {formatDeadline(safeTask.deadline)}
               </span>
             </div>
@@ -139,7 +157,7 @@ export default function TaskCard({ task }: TaskCardProps) {
               href={explorerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-medium text-emerald-600 hover:underline flex items-center gap-1"
+              className="text-xs font-medium text-[var(--accent-color)] hover:underline flex items-center gap-1"
             >
               Verify on Blockchain ↗
             </a>

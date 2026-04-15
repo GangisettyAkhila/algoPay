@@ -11,6 +11,10 @@ const defaultTask: Task = {
   recipient: '',
   deadline: new Date().toISOString(),
   status: 'pending',
+  funded: false,
+  funding_txid: null,
+  funded_at: null,
+  locked_amount: 0,
   txid: undefined,
   error: undefined,
   paid_at: undefined,
@@ -25,6 +29,10 @@ export interface Task {
   recipient: string
   deadline: string
   status: TaskStatus
+  funded: boolean
+  funding_txid?: string | null
+  funded_at?: string | null
+  locked_amount: number
   txid?: string
   error?: string
   paid_at?: string
@@ -68,9 +76,13 @@ function normalizeTask(task: Partial<Task> | undefined | null): Task {
     amount: typeof task.amount === 'number' ? task.amount : 0,
     recipient: task.recipient ?? '',
     deadline: task.deadline ?? new Date().toISOString(),
-    status: (task.status && ['pending', 'executing', 'paid', 'failed'].includes(task.status)) 
+    status: (task.status && ['pending', 'executing', 'paid', 'failed', 'rule_blocked'].includes(task.status)) 
       ? task.status 
       : 'pending',
+    funded: task.funded ?? false,
+    funding_txid: task.funding_txid ?? null,
+    funded_at: task.funded_at ?? null,
+    locked_amount: typeof task.locked_amount === 'number' ? task.locked_amount : 0,
     txid: task.txid,
     error: task.error,
     paid_at: task.paid_at,
@@ -173,4 +185,26 @@ export async function fetchActivityLogs(): Promise<ActivityLog[]> {
     console.error('fetchActivityLogs error:', error)
     return []
   }
+}
+
+export async function getAgentAddress(): Promise<{ address: string; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/agent-address`)
+  if (!response.ok) throw new Error('Failed to get agent address')
+  return response.json()
+}
+
+export async function fundTask(taskId: string, fundingTxid: string): Promise<Task> {
+  const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/fund`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task_id: taskId, funding_txid: fundingTxid }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.detail ?? 'Failed to fund task')
+  }
+
+  return normalizeTask(data)
 }

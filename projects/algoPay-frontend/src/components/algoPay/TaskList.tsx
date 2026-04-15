@@ -14,7 +14,7 @@ export default function TaskList({ tasks, isLoading }: TaskListProps) {
     return (
       <div className="flex flex-col gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="card h-24 animate-pulse bg-zinc-50" />
+          <div key={i} className="card h-24 animate-pulse bg-[var(--bg-secondary)]" />
         ))}
       </div>
     )
@@ -22,10 +22,10 @@ export default function TaskList({ tasks, isLoading }: TaskListProps) {
 
   if (safeTasks.length === 0) {
     return (
-      <div className="card text-center py-16 bg-zinc-50 border-dashed border-2">
+      <div className="card text-center py-16 bg-[var(--bg-secondary)] border-[var(--border-color)] border-dashed border-2">
         <div className="text-3xl mb-4">📭</div>
-        <h3 className="text-sm font-bold text-zinc-900 uppercase">No Active Tasks</h3>
-        <p className="text-xs text-zinc-500 mt-2">
+        <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase">No Active Tasks</h3>
+        <p className="text-xs text-[var(--text-secondary)] mt-2">
           Your scheduled payments will appear here.
         </p>
       </div>
@@ -48,10 +48,10 @@ export default function TaskList({ tasks, isLoading }: TaskListProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase">
+        <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase">
           Scheduled Tasks ({safeTasks.length})
         </h3>
-        <div className="text-[10px] text-zinc-400">Polling every 5s</div>
+        <div className="text-[10px] text-[var(--text-secondary)]">Polling every 5s</div>
       </div>
       
       {sortedTasks.map((task) => (

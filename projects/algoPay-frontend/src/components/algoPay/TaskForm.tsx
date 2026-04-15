@@ -124,12 +124,12 @@ export default function TaskForm({ onSubmit, isSubmitting, disabled }: TaskFormP
     <div className="card shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold text-zinc-900">Schedule Payment</h2>
-          <p className="text-xs text-zinc-500 mt-1">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Schedule Payment</h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Funds will be released at the scheduled time.
           </p>
         </div>
-        <div className="tag tag-emerald bg-emerald-50 text-emerald-700">
+        <div className="tag tag-emerald">
           <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2" />
           IST Timezone
         </div>
@@ -138,7 +138,7 @@ export default function TaskForm({ onSubmit, isSubmitting, disabled }: TaskFormP
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Title */}
         <div>
-          <label className="block text-xs font-medium text-zinc-500 mb-2">Description</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Description</label>
           <input
             type="text"
             value={title}
@@ -148,14 +148,14 @@ export default function TaskForm({ onSubmit, isSubmitting, disabled }: TaskFormP
             disabled={disabled || isSubmitting}
           />
           {!title.trim() && (
-            <p className="text-[10px] text-zinc-400 mt-1">Required</p>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-1">Required</p>
           )}
         </div>
 
         {/* Amount & Deadline */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-500 mb-2">Amount (ALGO)</label>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Amount (ALGO)</label>
             <div className="relative">
               <input
                 type="number"
@@ -167,13 +167,13 @@ export default function TaskForm({ onSubmit, isSubmitting, disabled }: TaskFormP
                 className="form-input pr-12"
                 disabled={disabled || isSubmitting}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">ALGO</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">ALGO</span>
             </div>
             {amountError && <p className="text-[10px] text-red-500 mt-1">{amountError}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-500 mb-2">Execution Time (IST)</label>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Execution Time (IST)</label>
             <input
               type="datetime-local"
               value={deadline}
@@ -187,7 +187,7 @@ export default function TaskForm({ onSubmit, isSubmitting, disabled }: TaskFormP
 
         {/* Recipient */}
         <div>
-          <label className="block text-xs font-medium text-zinc-500 mb-2">Recipient Address</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-2">Recipient Address</label>
           <input
             type="text"
             value={recipient}
@@ -198,7 +198,7 @@ export default function TaskForm({ onSubmit, isSubmitting, disabled }: TaskFormP
             maxLength={58}
           />
           {addressError && <p className="text-[10px] text-red-500 mt-1">{addressError}</p>}
-          <p className="text-[10px] text-zinc-400 mt-1">{recipient.length}/58 characters</p>
+          <p className="text-[10px] text-[var(--text-secondary)] mt-1">{recipient.length}/58 characters</p>
         </div>
 
         {/* Error Display */}

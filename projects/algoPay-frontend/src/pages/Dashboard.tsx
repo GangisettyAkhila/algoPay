@@ -74,10 +74,10 @@ export default function Dashboard() {
   if (error && !isLoadingTasks) {
     return (
       <div className="app-layout pt-12">
-        <div className="bg-red-50 border border-red-100 rounded-xl p-8 max-w-lg mx-auto text-center">
+        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-8 max-w-lg mx-auto text-center">
           <div className="text-3xl mb-4">⚠️</div>
-          <h3 className="font-bold text-red-800">Backend Unreachable</h3>
-          <p className="text-sm text-red-600 mt-2">{error}</p>
+          <h3 className="font-bold text-[var(--accent-color)]">Backend Unreachable</h3>
+          <p className="text-sm text-[var(--text-secondary)] mt-2">{error}</p>
           <button className="btn btn-secondary mt-4" onClick={() => loadData(true)}>
             Retry
           </button>
@@ -91,23 +91,23 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">
+          <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
             Payment Dashboard
           </h1>
-          <p className="text-zinc-500 text-sm mt-1">
+          <p className="text-[var(--text-secondary)] text-sm mt-1">
             Autonomous payments on Algorand · Time in IST
           </p>
         </div>
         
         {/* User wallet only */}
-        <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 min-w-[280px]">
+        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-4 min-w-[280px]">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase">Your Wallet</span>
+            <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Your Wallet</span>
           </div>
-          <div className="text-xs font-mono text-zinc-600 mb-2 truncate">
+          <div className="text-xs font-mono text-[var(--text-secondary)] mb-2 truncate">
             {address ?? 'Not connected'}
           </div>
-          <div className="text-lg font-bold text-emerald-600">
+          <div className="text-lg font-bold text-[var(--accent-color)]">
             {typeof balance === 'number' ? balance.toFixed(3) : '0.000'} ALGO
           </div>
         </div>
@@ -121,12 +121,12 @@ export default function Dashboard() {
           { label: 'Executed', value: paidCount },
         ].map(({ label, value }) => (
           <div key={label} className="card flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-lg">
+            <div className="w-10 h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-lg">
               {label === 'Total Tasks' ? '📋' : label === 'Pending' ? '⏳' : '✅'}
             </div>
             <div>
-              <div className="text-xs text-zinc-500">{label}</div>
-              <div className="text-xl font-bold text-zinc-900">{value}</div>
+              <div className="text-xs text-[var(--text-secondary)]">{label}</div>
+              <div className="text-xl font-bold text-[var(--text-primary)]">{value}</div>
             </div>
           </div>
         ))}

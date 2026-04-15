@@ -72,6 +72,12 @@ class Task(BaseModel):
     recipient: str
     deadline: str
     status: str = "pending"
+    # Funding fields
+    funded: bool = False
+    funding_txid: Optional[str] = None
+    funded_at: Optional[str] = None
+    locked_amount: float = 0.0
+    # Execution fields
     txid: Optional[str] = None
     error: Optional[str] = None
     paid_at: Optional[str] = None
@@ -168,6 +174,13 @@ async def execute_task_safe(task_id: str) -> Optional[Task]:
             print(
                 f"[TASK] SKIPPED: Task {task_id} status is '{task.status}' - not pending"
             )
+            return task
+
+        # ===== FUNDING CHECK =====
+        if not task.funded:
+            print(f"[TASK] SKIPPED: Task {task_id} not funded")
+            task.status = "failed"
+            task.error = "Task not funded. Please fund before execution."
             return task
 
         # ===== ATOMIC STATUS UPDATE =====
@@ -408,6 +421,78 @@ async def delete_task(task_id: str) -> dict:
         raise HTTPException(status_code=404, detail="Task not found")
     tasks_db.remove(task)
     return {"message": f"Task {task_id} deleted"}
+
+
+# ============== FUNDING ==============
+
+
+class FundTaskRequest(BaseModel):
+    task_id: str
+    funding_txid: str
+
+
+@router.post("/tasks/{task_id}/fund")
+async def fund_task(task_id: str, request: FundTaskRequest) -> Task:
+    """
+    Mark a task as funded after user sends funds to agent wallet.
+
+    User must:
+    1. Send ALGO from their wallet to agent wallet
+    2. Provide the transaction ID
+
+    Backend verifies the transaction and marks task as funded.
+    """
+    task = next((t for t in tasks_db if t.id == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if task.funded:
+        raise HTTPException(status_code=400, detail="Task already funded")
+
+    # Verify the funding transaction exists on chain
+    agent_address = get_backend_sender()
+    try:
+        # Check if transaction is valid and went through
+        tx_info = payment_executor.client.pending_transaction_info(request.funding_txid)
+
+        # Verify it's a payment to our agent address
+        if tx_info.get("txn", {}).get("rcv") != agent_address:
+            raise HTTPException(
+                status_code=400, detail="Transaction not sent to agent wallet"
+            )
+
+        # Verify amount is sufficient
+        amount_sent = tx_info.get("txn", {}).get("amt", 0)
+        if amount_sent < int(task.amount * 1_000_000):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient funding. Sent: {amount_sent / 1_000_000} ALGO, Need: {task.amount} ALGO",
+            )
+
+        # Mark as funded
+        task.funded = True
+        task.funding_txid = request.funding_txid
+        task.funded_at = format_ist(now_ist())
+        task.locked_amount = task.amount
+
+        print(f"[FUND] Task {task_id} funded! TXID: {request.funding_txid}")
+
+    except Exception as e:
+        print(f"[FUND] Error verifying funding: {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Failed to verify funding transaction: {str(e)}"
+        )
+
+    return task
+
+
+@router.get("/agent-address")
+async def get_agent_address() -> dict:
+    """Get agent wallet address for funding"""
+    return {
+        "address": get_backend_sender(),
+        "message": "Send ALGO to this address to fund your tasks",
+    }
 
 
 # ============== PAYMENTS ==============
